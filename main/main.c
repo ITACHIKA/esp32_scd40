@@ -16,9 +16,15 @@
 #define CRC8_POLYNOMIAL 0x31
 #define CRC8_INIT 0xFF
 
+#define LV_USE_LOG 1
+
 TimerHandle_t scdReadTimer;
 
 TaskHandle_t scd_read_task_handle;
+
+SemaphoreHandle_t lvgl_mutex;
+
+bool fault_flag = false;
 
 uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
 {
@@ -40,12 +46,12 @@ uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
     return crc;
 }
 
-void scd_write_command(uint16_t cmd)
+esp_err_t scd_write_command(uint16_t cmd)
 {
     uint8_t send_seq[2];
     send_seq[0] = cmd >> 8;
     send_seq[1] = cmd;
-    i2c_master_write_to_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, send_seq, 2, portMAX_DELAY);
+    return i2c_master_write_to_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, send_seq, 2, pdMS_TO_TICKS(500));
 }
 
 void scd_read_callback()
@@ -57,34 +63,54 @@ void scd_read_data(void *pvParameters)
 {
     for (;;)
     {
-        uint8_t readBuffer[9]={0};
+        uint8_t readBuffer[9] = {0};
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        scd_write_command(0xec05);
-        vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
-        i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, portMAX_DELAY);
-        bool co2_crc_res = (sensirion_common_generate_crc(readBuffer, 2) == readBuffer[2]);
-        bool temp_crc_res = (sensirion_common_generate_crc(&readBuffer[3], 2) == readBuffer[5]);
-        bool rh_crc_res = (sensirion_common_generate_crc(&readBuffer[6], 2) == readBuffer[8]);
-        uint16_t co2_ppm = ((uint16_t)readBuffer[0] << 8 | readBuffer[1]);
-        uint16_t amb_temp_raw = ((uint16_t)readBuffer[3] << 8 | readBuffer[4]);
-        uint16_t rel_humi_raw = ((uint16_t)readBuffer[6] << 8 | readBuffer[7]);
-        float amb_temp = -45.0f + 175.0f * ((float)amb_temp_raw / 65535.0f);
-        float rel_humi = 100.0f * ((float)rel_humi_raw / 65535.0f);
-        char result[32];
-        if (co2_crc_res)
+        if(fault_flag)
         {
-            snprintf(result, sizeof(result), "{\"co2\":%u}", co2_ppm);
-            mqtt_publish("sensor/scd40/co2",result);
+            if(scd_write_command(0x21b1)==ESP_OK)
+            {
+                fault_flag=false;
+            }
         }
-        if(temp_crc_res)
+        if (!fault_flag)
         {
-            snprintf(result, sizeof(result), "{\"atemp\":%.2f}", amb_temp);
-            mqtt_publish("sensor/scd40/atmp",result);
-        }
-        if(rh_crc_res)
-        {
-            snprintf(result, sizeof(result), "{\"rh\":%.2f}", rel_humi);
-            mqtt_publish("sensor/scd40/rh",result);
+            if (scd_write_command(0xec05) != ESP_OK)
+            {
+                esp_rom_printf("Write error,skip\r\n");
+                fault_flag = true;
+                continue;
+            }
+            vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
+            if (i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(500)) != ESP_OK)
+            {
+                esp_rom_printf("Read error,skip\r\n");
+                fault_flag = true;
+                continue;
+            }
+            bool co2_crc_res = (sensirion_common_generate_crc(readBuffer, 2) == readBuffer[2]);
+            bool temp_crc_res = (sensirion_common_generate_crc(&readBuffer[3], 2) == readBuffer[5]);
+            bool rh_crc_res = (sensirion_common_generate_crc(&readBuffer[6], 2) == readBuffer[8]);
+            uint16_t co2_ppm = ((uint16_t)readBuffer[0] << 8 | readBuffer[1]);
+            uint16_t amb_temp_raw = ((uint16_t)readBuffer[3] << 8 | readBuffer[4]);
+            uint16_t rel_humi_raw = ((uint16_t)readBuffer[6] << 8 | readBuffer[7]);
+            float amb_temp = -45.0f + 175.0f * ((float)amb_temp_raw / 65535.0f);
+            float rel_humi = 100.0f * ((float)rel_humi_raw / 65535.0f);
+            char result[32];
+            if (co2_crc_res)
+            {
+                snprintf(result, sizeof(result), "{\"co2\":%u}", co2_ppm);
+                mqtt_publish("sensor/scd40/co2", result);
+            }
+            if (temp_crc_res)
+            {
+                snprintf(result, sizeof(result), "{\"atemp\":%.2f}", amb_temp);
+                mqtt_publish("sensor/scd40/atmp", result);
+            }
+            if (rh_crc_res)
+            {
+                snprintf(result, sizeof(result), "{\"rh\":%.2f}", rel_humi);
+                mqtt_publish("sensor/scd40/rh", result);
+            }
         }
     }
 }
@@ -114,6 +140,5 @@ void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(1000)); // wait for SCD40 ready
 
     scd_write_command(0x21b1); // start periodic measurement
-
     xTimerStart(scdReadTimer, portMAX_DELAY);
 }
