@@ -3,6 +3,7 @@
 #include <string.h>
 #include <option_configure.h>
 #include "esp_log.h"
+#include "esp_console.h"
 
 // #define USB_CDC
 
@@ -11,6 +12,10 @@
 #define UART_RX_PIN 44
 #define BUF_SIZE 1024
 #define RD_BUF_SIZE 8
+
+#define ESP_CONSOLE
+
+#define REPL_CHAR "esp32s3"
 
 static QueueHandle_t uartEventQueue;
 
@@ -69,7 +74,7 @@ void uartEventQueueHandler(void *pvParameters)
 
 void uart_init()
 {
-#ifndef USB_CDC
+#ifndef ESP_CONSOLE
     uart_config_t uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
@@ -85,7 +90,30 @@ void uart_init()
     uart_driver_install(UART_NUM, BUF_SIZE * 2, 0, 16, &uartEventQueue, 0);
     xTaskCreate(uartEventQueueHandler, "uartEventQueueHandler", 4096, NULL, 4, NULL);
 #else
-
+    esp_console_config_t console_config={
+        .max_cmdline_length = 128, //!< length of command line buffer, in bytes
+        .max_cmdline_args = 3,    //!< maximum number of command line arguments to parse
+        .heap_alloc_caps = MALLOC_CAP_SPIRAM,  //!< where to (e.g. MALLOC_CAP_SPIRAM) allocate heap objects such as cmds used by esp_console
+        .hint_color = 32,             //!< ASCII color code of hint text
+        .hint_bold = 0,              //!< Set to 1 to print hint text in bold
+    };
+    esp_console_init(&console_config);
+    esp_console_register_help_command();
+    esp_console_repl_t *repl = NULL;
+    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+    /* Prompt to be printed before each line.
+     * This can be customized, made dynamic, etc.
+     */
+    repl_config.prompt = REPL_CHAR ">";
+    repl_config.max_cmdline_length = 128;
+    esp_console_dev_uart_config_t hw_config = {
+    .channel = UART_NUM,    \
+    .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE, \
+    .tx_gpio_num = UART_TX_PIN,                    \
+    .rx_gpio_num = UART_RX_PIN,                    \
+    };
+    ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
+    ESP_ERROR_CHECK(esp_console_start_repl(repl));
 #endif
 }
 
