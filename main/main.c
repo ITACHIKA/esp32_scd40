@@ -5,11 +5,14 @@
 #include "esp_log.h"
 #include "mqtt_service.h"
 #include "driver/i2c.h"
+#include "net_shell.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_SDA 4
 #define I2C_MASTER_SCL 5
 #define I2C_MASTER_FREQ_HZ 100000
+
+#define MAX_RETRIES_BEFORE_REBOOT 5
 
 #define SCD40_I2C_ADDR 0x62
 
@@ -25,6 +28,7 @@ TaskHandle_t scd_read_task_handle;
 SemaphoreHandle_t lvgl_mutex;
 
 bool fault_flag = false;
+static uint8_t fail_cnt=0;
 
 uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
 {
@@ -46,7 +50,7 @@ uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
     return crc;
 }
 
-esp_err_t scd_write_command(uint16_t cmd)
+static esp_err_t scd_write_command(uint16_t cmd)
 {
     uint8_t send_seq[2];
     send_seq[0] = cmd >> 8;
@@ -65,11 +69,19 @@ void scd_read_data(void *pvParameters)
     {
         uint8_t readBuffer[9] = {0};
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        if(fail_cnt==MAX_RETRIES_BEFORE_REBOOT)
+        {
+            esp_restart();
+        }
         if(fault_flag)
         {
             if(scd_write_command(0x21b1)==ESP_OK)
             {
                 fault_flag=false;
+            }
+            else
+            {
+                fail_cnt++;
             }
         }
         if (!fault_flag)
@@ -78,6 +90,7 @@ void scd_read_data(void *pvParameters)
             {
                 esp_rom_printf("Write error,skip\r\n");
                 fault_flag = true;
+                fail_cnt++;
                 continue;
             }
             vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
@@ -85,6 +98,7 @@ void scd_read_data(void *pvParameters)
             {
                 esp_rom_printf("Read error,skip\r\n");
                 fault_flag = true;
+                fail_cnt++;
                 continue;
             }
             bool co2_crc_res = (sensirion_common_generate_crc(readBuffer, 2) == readBuffer[2]);
@@ -123,6 +137,7 @@ void app_main(void)
     networkInit();
     esp_log_level_set("wifi", ESP_LOG_WARN);
     mqtt_init();
+    start_webserver();
 
     // put user code here
     i2c_config_t conf = {

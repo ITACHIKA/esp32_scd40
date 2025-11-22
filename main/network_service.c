@@ -52,7 +52,7 @@ void networkInit()
     else
     {
         esp_rom_printf("wifissid:%s\n", wifiSSID);
-        esp_rom_printf("wifipass:%s\n", WifiPasswd);
+        //esp_rom_printf("wifipass:%s\n", WifiPasswd);
         ESP_ERROR_CHECK(esp_netif_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
         esp_netif_create_default_wifi_sta();

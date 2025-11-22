@@ -1,0 +1,141 @@
+/* 可选的 CSS 样式 */
+body {
+    margin: 0;
+}
+
+.container1 {
+    top:90px;
+    width: 39%;
+    height: 500px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 50px;
+    justify-items: center;
+    position: relative;
+    left: calc(57%);
+    /* 根据需要调整元素的宽度 */
+    transform: translateX(-100%);
+}
+
+.divLine{
+    border-bottom: 2px solid #b7b2b2; /* 添加底部边框 */
+    padding-bottom: 20px; /* 可选：增加下方间距 */
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1); /* 添加虚化效果 */
+    padding:0 !important
+}
+
+.espSettings{
+    margin-left: 45px;
+    line-height: 50px;
+}
+
+.generalInfo{
+    position:relative;
+    width: 100%;
+    line-height: 50px;
+    margin-left: 45px;
+    /* text-align: center; */
+}
+
+.sidebar {
+    background-color: lightgray;
+    height: 120vh;
+    padding: 0 !important
+}
+
+@media only screen and (max-width: 800px) {
+    .container1 {
+        display: block; /* 将布局改为块级元素，即上下排布 */
+    }
+    .sidebar {
+        background-color: lightgray;
+        height: 180vh;
+        padding: 0 !important
+    }
+    
+}
+
+.chart-canvas {
+    width: 90%; /* 设置 canvas 宽度为父元素宽度的100% */
+    height: 300px; /* 设置 canvas 高度为固定值，或者根据需要调整 */
+    margin:10px;
+}
+
+header {
+    width: 100%;
+    height: 70px;
+    /* 让标题元素占据整个页面的宽度 */
+    margin: 0;
+    background-color: darkgrey;
+    color: black;
+    font-size: 50px;
+    border-bottom: solid blue;
+}
+
+.powerControl{
+    margin-top: 20px;
+    width: 50%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+a{
+    display:block;
+    height: 30px;
+    width:100%;
+    background-color: turquoise;
+    text-align: center;
+    margin-top: 5px;
+    text-decoration: none !important 
+}
+.button {
+    line-height: normal;
+    margin-right: 20px;
+    display: inline-block; /* 设置按钮为行内块元素，使其可以水平排列 */
+    padding: 5px 10px; /* 设置按钮内边距，调整按钮大小 */
+    font-size: 14px; /* 设置按钮文字大小 */
+    font-weight: bold; /* 设置按钮文字加粗 */
+    text-align: center; /* 设置按钮文字居中 */
+    text-decoration: none; /* 去除按钮文字下划线 */
+    color: #ffffff; /* 设置按钮文字颜色为白色 */
+    background-color: #0077ff; /* 设置按钮背景颜色为蓝色 */
+    border: none; /* 去除按钮边框 */
+    border-radius: 5px; /* 设置按钮圆角 */
+    cursor: pointer; /* 设置鼠标悬停样式为手型 */
+    transition: background-color 0.3s ease; /* 添加过渡效果，使按钮背景颜色在鼠标悬停时有渐变效果 */
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    line-height: normal;
+    margin-right: 20px;
+    display: inline-block; /* 设置按钮为行内块元素，使其可以水平排列 */
+    padding: 5px 10px; /* 设置按钮内边距，调整按钮大小 */
+    font-size: 14px; /* 设置按钮文字大小 */
+    font-weight: bold; /* 设置按钮文字加粗 */
+    text-align: center; /* 设置按钮文字居中 */
+    text-decoration: none; /* 去除按钮文字下划线 */
+    color: #ffffff; /* 设置按钮文字颜色为白色 */
+    background-color: #9d9ea0; /* 设置按钮背景颜色为蓝色 */
+    border: none; /* 去除按钮边框 */
+    border-radius: 5px; /* 设置按钮圆角 */
+    transition: background-color 0.3s ease; /* 添加过渡效果，使按钮背景颜色在鼠标悬停时有渐变效果 */
+}
+
+.textbar{
+    width: 50px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.warnMsg{
+    color:#ff0000;
+    
+}

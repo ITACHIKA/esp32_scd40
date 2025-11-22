@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h3>ESP32 WebSocket Test</h3>
+
+<input id="msg" type="text" placeholder="type message"/>
+<button onclick="sendMsg()">Send</button>
+
+<div id="log"></div>
+
+<script>
+let ws = new WebSocket("ws://192.168.1.157/ws");
+
+ws.onopen = () => {
+    console.log("WS connected");
+};
+
+ws.onmessage = (event) => {
+    console.log("ESP32:", event.data);
+};
+
+ws.onclose = () => {
+    console.log("WS closed");
+};
+
+function sendMsg() {
+    let text = document.getElementById("msg").value;
+    ws.send(text);
+
+window.addEventListener("beforeunload", function () {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+    }
+});
+
+    ws.onmessage = function(event) {
+        console.log("ESP32:", event.data);
+        document.getElementById("log").innerHTML = event.data.replace(/\r?\n/g, "<br>");;
+    };
+}
+</script>
+
+</body>
+</html>
