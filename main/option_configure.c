@@ -31,8 +31,9 @@ char *mqttUri;
 char *mqttUsername;
 char *mqttPasswd;
 char *mqttcliid;
+char *devName;
 
-esp_err_t write_to_netsh(char* buf)
+esp_err_t write_to_netsh(char *buf)
 {
 
     return ESP_OK;
@@ -46,6 +47,11 @@ void read_nvs()
     nvs_utils_get_str("mqttusr", mqttUsername, 64);
     nvs_utils_get_str("mqttpwd", mqttPasswd, 128);
     nvs_utils_get_str("mqttcliid", mqttcliid, 23);
+    nvs_utils_get_str("devName", devName, 128);
+    if (strcmp(devName,"")==0)
+    {
+        devName = "sensor";
+    }
 }
 
 static esp_err_t scd_write_command(uint16_t cmd)
@@ -133,6 +139,14 @@ int set_command(int argc, char **argv)
             optionChange = true;
         }
     }
+    else if (strcmp(config_str, "devname") == 0)
+    {
+        if (strcmp(config_val, devName) != 0)
+        {
+            strcpy(devName, config_val);
+            optionChange = true;
+        }
+    }
     else
     {
         esp_rom_printf("Unknown param\r\n");
@@ -158,6 +172,7 @@ esp_err_t esp_console_register_set_command(void)
 int view_command()
 {
     esp_rom_printf("Current config:\r\n");
+    esp_rom_printf("Device Name:%s\r\n", devName);
     esp_rom_printf("Wifi SSID:%s\r\n", wifiSSID);
     esp_rom_printf("Wifi passwd:%s\r\n", WifiPasswd);
     esp_rom_printf("mqtt server uri:%s\r\n", mqttUri);
@@ -185,6 +200,7 @@ int save_command()
 {
     if (optionChange == true)
     {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_utils_set_str("devName", devName));
         ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_utils_set_str("wifissid", wifiSSID));
         ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_utils_set_str("wifipass", WifiPasswd));
         ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_utils_set_str("mqtturi", mqttUri));
@@ -214,7 +230,7 @@ esp_err_t esp_console_register_save_command(void)
 int unsave_command()
 {
     read_nvs();
-    optionChange=false;
+    optionChange = false;
     esp_rom_printf("Changes cleared.\r\n");
     return 0;
 }
@@ -269,18 +285,19 @@ esp_err_t esp_console_register_calibr_command(void)
 
 void optionConfigInit()
 {
-    uartInputQueue = xQueueCreate(10, sizeof(char *));
+    //uartInputQueue = xQueueCreate(10, sizeof(char *));
     wifiSSID = calloc(32, 1);
     WifiPasswd = calloc(64, 1);
     mqttUsername = calloc(64, 1);
     mqttPasswd = calloc(128, 1);
     mqttUri = calloc(128, 1);
     mqttcliid = calloc(23, 1);
+    devName = calloc(128,1);
     read_nvs();
     esp_console_register_set_command();
     esp_console_register_view_command();
     esp_console_register_save_command();
     esp_console_register_unsave_command();
-    
+
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
 }

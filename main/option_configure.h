@@ -12,6 +12,9 @@ extern char *mqttUsername;
 extern char *mqttPasswd;
 extern char *mqttcliid;
 
+extern char *devName;
+
 extern bool optionChange;
+
 
 void optionConfigInit();

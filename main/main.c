@@ -30,6 +30,11 @@ SemaphoreHandle_t lvgl_mutex;
 bool fault_flag = false;
 static uint8_t fail_cnt=0;
 
+static char* mqtt_devname;
+static char* mqtt_co2_topic;
+static char* mqtt_atemp_topic;
+static char* mqtt_rh_topic;
+
 uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
 {
     uint16_t current_byte;
@@ -113,17 +118,17 @@ void scd_read_data(void *pvParameters)
             if (co2_crc_res)
             {
                 snprintf(result, sizeof(result), "{\"co2\":%u}", co2_ppm);
-                mqtt_publish("sensor/scd40/co2", result);
+                mqtt_publish(mqtt_co2_topic, result);
             }
             if (temp_crc_res)
             {
                 snprintf(result, sizeof(result), "{\"atemp\":%.2f}", amb_temp);
-                mqtt_publish("sensor/scd40/atmp", result);
+                mqtt_publish(mqtt_atemp_topic, result);
             }
             if (rh_crc_res)
             {
                 snprintf(result, sizeof(result), "{\"rh\":%.2f}", rel_humi);
-                mqtt_publish("sensor/scd40/rh", result);
+                mqtt_publish(mqtt_rh_topic, result);
             }
         }
     }
@@ -138,7 +143,14 @@ void app_main(void)
     esp_log_level_set("wifi", ESP_LOG_WARN);
     mqtt_init();
     start_webserver();
-
+    mqtt_devname=calloc(1,strlen(devName)+1);
+    snprintf(mqtt_devname,strlen(devName)+1,devName);
+    mqtt_co2_topic=calloc(1,128);
+    mqtt_rh_topic=calloc(1,128);
+    mqtt_atemp_topic=calloc(1,128);
+    snprintf(mqtt_co2_topic,128,"sensor/%s/co2",mqtt_devname);
+    snprintf(mqtt_rh_topic,128,"sensor/%s/rh",mqtt_devname);
+    snprintf(mqtt_atemp_topic,128,"sensor/%s/atemp",mqtt_devname);
     // put user code here
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
