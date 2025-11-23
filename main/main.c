@@ -19,18 +19,13 @@
 #define CRC8_POLYNOMIAL 0x31
 #define CRC8_INIT 0xFF
 
-#define LV_USE_LOG 1
-
 TimerHandle_t scdReadTimer;
 
 TaskHandle_t scd_read_task_handle;
 
-SemaphoreHandle_t lvgl_mutex;
-
 bool fault_flag = false;
 static uint8_t fail_cnt=0;
 
-static char* mqtt_devname;
 static char* mqtt_co2_topic;
 static char* mqtt_atemp_topic;
 static char* mqtt_rh_topic;
@@ -143,14 +138,12 @@ void app_main(void)
     esp_log_level_set("wifi", ESP_LOG_WARN);
     mqtt_init();
     start_webserver();
-    mqtt_devname=calloc(1,strlen(devName)+1);
-    snprintf(mqtt_devname,strlen(devName)+1,devName);
     mqtt_co2_topic=calloc(1,128);
     mqtt_rh_topic=calloc(1,128);
     mqtt_atemp_topic=calloc(1,128);
-    snprintf(mqtt_co2_topic,128,"sensor/%s/co2",mqtt_devname);
-    snprintf(mqtt_rh_topic,128,"sensor/%s/rh",mqtt_devname);
-    snprintf(mqtt_atemp_topic,128,"sensor/%s/atemp",mqtt_devname);
+    snprintf(mqtt_co2_topic,128,"sensor/%s/co2",devName);
+    snprintf(mqtt_rh_topic,128,"sensor/%s/rh",devName);
+    snprintf(mqtt_atemp_topic,128,"sensor/%s/atemp",devName);
     // put user code here
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
@@ -159,8 +152,8 @@ void app_main(void)
         .scl_io_num = I2C_MASTER_SCL,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = I2C_MASTER_FREQ_HZ};
-    i2c_param_config(I2C_MASTER_NUM, &conf);
-    i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0);
+    ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0));
 
     scdReadTimer = xTimerCreate("scdReadTimer", pdMS_TO_TICKS(5050), pdTRUE, NULL, scd_read_callback);
     xTaskCreate(scd_read_data, "SCD read Task", 4096, NULL, 5, &scd_read_task_handle);

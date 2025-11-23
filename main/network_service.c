@@ -7,8 +7,11 @@
 
 #define WIFI_RECONN_INTV_MS 50
 
+#define WIFI_RECONN_MAX_RETRIES 10
+
 const char *TAG = "WF Handler";
 bool networkReady = false;
+static uint8_t retry_count=0;
 
 static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -29,7 +32,15 @@ static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int
             wifi_event_sta_disconnected_t *disconn = (wifi_event_sta_disconnected_t *)event_data;
             ESP_LOGW(TAG, "Disconnected from SSID:%s, reason:%d", disconn->ssid, disconn->reason);
             networkReady = false;
-            esp_wifi_connect();
+            retry_count++;
+            if(retry_count<WIFI_RECONN_MAX_RETRIES)
+            {
+                esp_wifi_connect();
+            }
+            else
+            {
+                esp_rom_printf("WIFI connect retry max count reached, please check configuration!");
+            }
             break;
         }
         default:
@@ -79,13 +90,13 @@ void networkInit()
         strncpy((char *)wifi_cfg.sta.ssid, wifiSSID, sizeof(wifi_cfg.sta.ssid));
         wifi_cfg.sta.ssid[sizeof(wifi_cfg.sta.ssid) - 1] = '\0';
         strncpy((char *)wifi_cfg.sta.password, WifiPasswd, sizeof(wifi_cfg.sta.password));
-        wifi_cfg.sta.password[sizeof(wifi_cfg.sta.password) - 1] = '\0';
+        wifi_cfg.sta.password[sizeof(wifi_cfg.sta.password) - 1] = '\0'; //to avoid ovf
         esp_wifi_set_ps(WIFI_PS_NONE);
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg));
         ESP_ERROR_CHECK(esp_wifi_start());
 
-        ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(44)); //https://esp32.com/viewtopic.php?f=2&t=41899#p137764, for some ESP32-S3 only
-
-        esp_rom_printf("wifi conn:%d\r\n", esp_wifi_connect());
+        ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(44)); //https://esp32.com/viewtopic.php?f=2&t=41899#p137764, guess for YD-ESP32-S3 or similar clones only
+        
+        esp_rom_printf("wifi connect: %d\r\n", esp_wifi_connect());
     }
 }

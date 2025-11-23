@@ -4,6 +4,7 @@
 #include <option_configure.h>
 #include "esp_log.h"
 #include "esp_console.h"
+#include "linenoise/linenoise.h"
 
 // #define USB_CDC
 
@@ -93,11 +94,14 @@ void uart_init()
     esp_console_config_t console_config={
         .max_cmdline_length = 128, //!< length of command line buffer, in bytes
         .max_cmdline_args = 3,    //!< maximum number of command line arguments to parse
-        .heap_alloc_caps = MALLOC_CAP_SPIRAM,  //!< where to (e.g. MALLOC_CAP_SPIRAM) allocate heap objects such as cmds used by esp_console
+        .heap_alloc_caps = MALLOC_CAP_DEFAULT,  //!< where to (e.g. MALLOC_CAP_SPIRAM) allocate heap objects such as cmds used by esp_console
         .hint_color = 32,             //!< ASCII color code of hint text
         .hint_bold = 0,              //!< Set to 1 to print hint text in bold
     };
-    esp_console_init(&console_config);
+    // linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
+    // printf("config addr=%p  hint_color=%d\n", &console_config, console_config.hint_color);
+    // printf("%d",esp_console_init(&console_config));
+    // above code will not work since REPL will init console again
     esp_console_register_help_command();
     esp_console_repl_t *repl = NULL;
     esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();

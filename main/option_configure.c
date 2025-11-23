@@ -4,7 +4,6 @@
 #include "uart_service.h"
 #include "nvs_service.h"
 #include "esp_console.h"
-#include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
 #include <string.h>
 #include "driver/i2c.h"
@@ -107,7 +106,7 @@ int set_command(int argc, char **argv)
             optionChange = true;
         }
     }
-    else if (strcmp(config_str, "uri") == 0)
+    else if (strcmp(config_str, "mqtturi") == 0)
     {
         if (strcmp(config_val, mqttUri) != 0)
         {
@@ -163,14 +162,16 @@ esp_err_t esp_console_register_set_command(void)
 
     esp_console_cmd_t command = {
         .command = "set",
-        .help = "Set a variety of MCU configs.",
+        .help = "Set a variety of MCU configs. Available setting: wifissid wifipass mqtturi mqttpass mqttusr mqttcliid devname",
         .func = &set_command,
         .argtable = &set_args};
     return esp_console_cmd_register(&command);
 }
 
-int view_command()
+int view_command(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
     esp_rom_printf("Current config:\r\n");
     esp_rom_printf("Device Name:%s\r\n", devName);
     esp_rom_printf("Wifi SSID:%s\r\n", wifiSSID);
@@ -196,8 +197,10 @@ esp_err_t esp_console_register_view_command(void)
     return esp_console_cmd_register(&command);
 }
 
-int save_command()
+int save_command(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
     if (optionChange == true)
     {
         ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_utils_set_str("devName", devName));
@@ -227,8 +230,10 @@ esp_err_t esp_console_register_save_command(void)
     return esp_console_cmd_register(&command);
 }
 
-int unsave_command()
+int unsave_command(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
     read_nvs();
     optionChange = false;
     esp_rom_printf("Changes cleared.\r\n");
@@ -283,6 +288,25 @@ esp_err_t esp_console_register_calibr_command(void)
     return esp_console_cmd_register(&command);
 }
 
+int reboot_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    esp_rom_printf("System will now reboot");
+    esp_restart();
+}
+
+esp_err_t esp_console_register_reboot_command(void)
+{
+
+    esp_console_cmd_t command = {
+        .command = "reboot",
+        .help = "Reboot the system.",
+        .func = &reboot_command,
+        .argtable = NULL};
+    return esp_console_cmd_register(&command);
+}
+
 void optionConfigInit()
 {
     //uartInputQueue = xQueueCreate(10, sizeof(char *));
@@ -298,6 +322,7 @@ void optionConfigInit()
     esp_console_register_view_command();
     esp_console_register_save_command();
     esp_console_register_unsave_command();
-
+    esp_console_register_calibr_command();
+    esp_console_register_reboot_command();
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
 }
