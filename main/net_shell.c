@@ -2,26 +2,27 @@
 #include "esp_log.h"
 #include "esp_console.h"
 #include "option_configure.h"
+#include "esp_timer.h"
 
 static const char *TAG = "HTTPSERVER";
 char *ws_cmd_result_return_buf;
 
-static char* get_cfg()
+static char *get_cfg()
 {
-    uint16_t buf_size=512;
-    char* cfg_str=calloc(1,buf_size);
-    assert(cfg_str); //make sure pointer is not null
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"Current config:\r\n");
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"Device name:%s\r\n",devName);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"Wifi SSID:%s\r\n", wifiSSID);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"Wifi passwd:%s\r\n", WifiPasswd);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"mqtt server uri:%s\r\n", mqttUri);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"mqtt username:%s\r\n", mqttUsername);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"mqtt passwd:%s\r\n", mqttPasswd);
-    snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"mqtt cli id:%s\r\n", mqttcliid);
+    uint16_t buf_size = 512;
+    char *cfg_str = calloc(1, buf_size);
+    assert(cfg_str); // make sure pointer is not null
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Current config:\r\n");
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Device name:%s\r\n", devName);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Wifi SSID:%s\r\n", wifiSSID);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Wifi passwd:%s\r\n", WifiPasswd);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "mqtt server uri:%s\r\n", mqttUri);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "mqtt username:%s\r\n", mqttUsername);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "mqtt passwd:%s\r\n", mqttPasswd);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "mqtt cli id:%s\r\n", mqttcliid);
     if (optionChange == true)
     {
-        snprintf(cfg_str+strlen(cfg_str),buf_size-strlen(cfg_str),"Option(s) changed and not saved.\r\n");
+        snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Option(s) changed and not saved.\r\n");
     }
     return cfg_str;
 }
@@ -64,7 +65,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         }
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
         char *msg = malloc(32);
-        if (strcmp((const char*)ws_pkt.payload, "view") != 0)
+        if (strcmp((const char *)ws_pkt.payload, "view") != 0)
         {
             uint8_t len = strlen((const char *)ws_pkt.payload) + 1;
             char *cmd = malloc(len);
@@ -85,7 +86,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         else
         {
             free(msg);
-            msg=get_cfg();
+            msg = get_cfg();
         }
         // httpd_ws_send_data()
         httpd_ws_frame_t ret_pkt = {
@@ -107,6 +108,24 @@ static const httpd_uri_t ws = {
     .user_ctx = NULL,
     .is_websocket = true};
 
+static esp_err_t discover_handler(httpd_req_t *req)
+{
+    char* resp = malloc(128);
+    int64_t uptime = esp_timer_get_time();
+    snprintf(resp,128,"{\"device\":\"%s\",\"name\":\"%s\",\"uptime\":\"%lld\"}",CONFIG_IDF_TARGET,devName,uptime);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    httpd_resp_send(req, resp, strlen(resp));
+    return ESP_OK;
+}
+
+static const httpd_uri_t discover = {
+    .uri = "/esp_discover",
+    .method = HTTP_GET,
+    .handler = discover_handler,
+    .user_ctx = NULL,
+    .is_websocket = true};
+
 httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
@@ -119,6 +138,7 @@ httpd_handle_t start_webserver(void)
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &ws);
+        httpd_register_uri_handler(server, &discover);
         ws_cmd_result_return_buf = malloc(1024 * sizeof(char));
         return server;
     }

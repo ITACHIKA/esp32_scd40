@@ -94,7 +94,7 @@ void networkInit()
         esp_wifi_set_ps(WIFI_PS_NONE);
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg));
         ESP_ERROR_CHECK(esp_wifi_start());
-
+        
         ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(44)); //https://esp32.com/viewtopic.php?f=2&t=41899#p137764, guess for YD-ESP32-S3 or similar clones only
         
         esp_rom_printf("wifi connect: %d\r\n", esp_wifi_connect());

@@ -16,7 +16,7 @@
 
 #define ESP_CONSOLE
 
-#define REPL_CHAR "esp32s3"
+#define REPL_CHAR CONFIG_IDF_TARGET
 
 static QueueHandle_t uartEventQueue;
 
@@ -101,7 +101,8 @@ void uart_init()
     // linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
     // printf("config addr=%p  hint_color=%d\n", &console_config, console_config.hint_color);
     // printf("%d",esp_console_init(&console_config));
-    // above code will not work since REPL will init console again
+    // above code will cause crash since REPL will init console again
+    // lazy to write REPL function so using default below, which doesn't support hint text color
     esp_console_register_help_command();
     esp_console_repl_t *repl = NULL;
     esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();

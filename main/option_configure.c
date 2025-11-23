@@ -307,6 +307,25 @@ esp_err_t esp_console_register_reboot_command(void)
     return esp_console_cmd_register(&command);
 }
 
+int mem_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    size_t freemem = esp_get_free_heap_size();
+    esp_rom_printf("Free heap mem:%d bytes\r\n",freemem);
+    return 0;
+}
+
+esp_err_t esp_console_register_mem_command(void)
+{
+    esp_console_cmd_t command = {
+        .command = "mem",
+        .help = "Get system mem usage.",
+        .func = &mem_command,
+        .argtable = NULL};
+    return esp_console_cmd_register(&command);
+}
+
 void optionConfigInit()
 {
     //uartInputQueue = xQueueCreate(10, sizeof(char *));
@@ -324,5 +343,6 @@ void optionConfigInit()
     esp_console_register_unsave_command();
     esp_console_register_calibr_command();
     esp_console_register_reboot_command();
+    esp_console_register_mem_command();
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
 }
