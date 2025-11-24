@@ -13,6 +13,7 @@ extern char *mqttPasswd;
 extern char *mqttcliid;
 
 extern char *devName;
+extern char *devmac;
 
 extern bool optionChange;
 

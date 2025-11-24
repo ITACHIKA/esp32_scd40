@@ -17,6 +17,7 @@ static char *get_cfg()
     assert(cfg_str); // make sure pointer is not null
     snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Current config:\r\n");
     snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Device name:%s\r\n", devName);
+    snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Device MAC:%s\r\n", devmac);
     snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Wifi SSID:%s\r\n", wifiSSID);
     snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "Wifi passwd:%s\r\n", WifiPasswd);
     snprintf(cfg_str + strlen(cfg_str), buf_size - strlen(cfg_str), "mqtt server uri:%s\r\n", mqttUri);

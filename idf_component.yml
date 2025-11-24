@@ -1,4 +1,3 @@
 dependencies:
   mqtt:
     version: '*'
-  lvgl/lvgl: ^9.4.0

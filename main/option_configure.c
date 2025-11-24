@@ -7,6 +7,7 @@
 #include "argtable3/argtable3.h"
 #include <string.h>
 #include "driver/i2c.h"
+#include "esp_mac.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define SCD40_I2C_ADDR 0x62
@@ -31,6 +32,7 @@ char *mqttUsername;
 char *mqttPasswd;
 char *mqttcliid;
 char *devName;
+char *devmac;
 
 esp_err_t write_to_netsh(char *buf)
 {
@@ -47,9 +49,12 @@ void read_nvs()
     nvs_utils_get_str("mqttpwd", mqttPasswd, 128);
     nvs_utils_get_str("mqttcliid", mqttcliid, 23);
     nvs_utils_get_str("devName", devName, 128);
+    uint8_t mac[6];
+    esp_read_mac(mac,ESP_MAC_BASE);
+    snprintf(devmac,128,"%02X:%02X:%02X:%02X:%02X:%02X",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
     if (strcmp(devName,"")==0)
-    {
-        devName = "sensor";
+    {   
+        strncpy(devName,devmac,strlen(devmac));
     }
 }
 
@@ -174,6 +179,7 @@ int view_command(int argc, char **argv)
     (void)argv;
     esp_rom_printf("Current config:\r\n");
     esp_rom_printf("Device Name:%s\r\n", devName);
+    esp_rom_printf("Device MAC:%s\r\n", devmac);
     esp_rom_printf("Wifi SSID:%s\r\n", wifiSSID);
     esp_rom_printf("Wifi passwd:%s\r\n", WifiPasswd);
     esp_rom_printf("mqtt server uri:%s\r\n", mqttUri);
@@ -336,6 +342,7 @@ void optionConfigInit()
     mqttUri = calloc(128, 1);
     mqttcliid = calloc(23, 1);
     devName = calloc(128,1);
+    devmac = calloc(49,1);
     read_nvs();
     esp_console_register_set_command();
     esp_console_register_view_command();
