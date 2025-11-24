@@ -39,7 +39,7 @@ static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int
             }
             else
             {
-                esp_rom_printf("WIFI connect retry max count reached, please check configuration!");
+                esp_rom_printf("WIFI connect retry max count reached, please check configuration!\r\n");
             }
             break;
         }

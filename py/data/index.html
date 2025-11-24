@@ -17,7 +17,7 @@
         <div class="row">
             <div class="sidebar col-md-1 col-sm-2">
                 <!-- <a href="./data">asd</a> -->
-                <a href="#" id="toggleOverview" >Monitor</a>
+                <a href="#" id="toggleMonitor">Monitor</a>
                 <a href="#" id="toggleManagement">Manage</a>
                 <a href="#" id="toggleSetting">Settings</a>
             </div>
@@ -26,7 +26,23 @@
                     <button id="scan" style="margin: 10px;">Discover devices in LAN</button>
                 </div>
                 <div id="devlist">
-
+                </div>
+                <div id="devmanage" style="display:none; margin: 10px;">
+                    <label for="deviceSelect">Select Device:</label>
+                    <select id="deviceSelect">
+                    </select>
+                    <div id="webconsole" style="display: flex;align-items:flex-start;margin: 10px;">
+                        <div id="input-box">
+                            <textarea id="commandInput" rows="1" cols="30"
+                                placeholder="Enter command here..."></textarea>
+                            <br>
+                            <button id="sendCommand">Send Command</button>
+                        </div>
+                        <div id="output-box" style="margin-left:20px;">
+                            <textarea id="commandOutput" rows="10" cols="50" readonly
+                                placeholder="Command output"></textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

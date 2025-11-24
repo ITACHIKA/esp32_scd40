@@ -3,6 +3,9 @@
 #include "esp_console.h"
 #include "option_configure.h"
 #include "esp_timer.h"
+#include "network_service.h"
+
+#define WEBSHELL_RETRY_COUNT 10
 
 static const char *TAG = "HTTPSERVER";
 char *ws_cmd_result_return_buf;
@@ -130,8 +133,19 @@ httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
+    uint8_t retry_count=0;
     // Start the httpd server
+    while(!networkReady)
+    {
+        esp_rom_printf("Waiting for network ready to start webshell\r\n");
+        vTaskDelay(pdMS_TO_TICKS(200));
+        retry_count++;
+        if(retry_count==WEBSHELL_RETRY_COUNT)
+        {
+            esp_rom_printf("Webshell start fail since network is not ready.\r\n");
+            return NULL;
+        }
+    }
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK)
     {
