@@ -100,6 +100,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         };
         httpd_ws_send_frame(req, &ret_pkt);
         free(msg);
+        free(buf);
     }
     return ESP_OK;
 }
@@ -119,6 +120,7 @@ static esp_err_t discover_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     httpd_resp_send(req, resp, strlen(resp));
+    free(resp);
     return ESP_OK;
 }
 
