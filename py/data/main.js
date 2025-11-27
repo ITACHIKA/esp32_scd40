@@ -5,18 +5,7 @@ if (port) {
     serverURL += ":" + port;
 }
 
-console.log(serverURL);
-
-function setUsereditStatus(status) {
-    editableContents = document.getElementsByClassName("userEnter");
-    editableNetContents = document.getElementsByClassName("editablediv");
-    for (let i = 0; i < editableContents.length; i++) {
-        editableContents[i].disabled = status;
-    }
-    for (var content of editableNetContents) {
-        content.contentEditable = !status;
-    }
-}
+console.log(serverURL); 
 
 document.getElementById('toggleManagement').addEventListener('click', function (event) {
     event.preventDefault();

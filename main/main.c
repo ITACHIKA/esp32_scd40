@@ -78,10 +78,13 @@ void scd_read_data(void *pvParameters)
         {
             if(scd_write_command(0x21b1)==ESP_OK)
             {
+                esp_rom_printf("SCD40 reinit OK\r\n");
                 fault_flag=false;
+                continue;
             }
             else
             {
+                esp_rom_printf("SCD40 reinit fail\r\n");
                 fail_cnt++;
             }
         }
@@ -95,7 +98,7 @@ void scd_read_data(void *pvParameters)
                 continue;
             }
             vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
-            if (i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(500)) != ESP_OK)
+            if (i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(1000)) != ESP_OK)
             {
                 esp_rom_printf("Read error,skip\r\n");
                 fault_flag = true;
@@ -157,8 +160,8 @@ void app_main(void)
     ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0));
 
     scdReadTimer = xTimerCreate("scdReadTimer", pdMS_TO_TICKS(5050), pdTRUE, NULL, scd_read_callback);
-    xTaskCreate(scd_read_data, "SCD read Task", 4096, NULL, 5, &scd_read_task_handle);
     vTaskDelay(pdMS_TO_TICKS(1000)); // wait for SCD40 ready
+    xTaskCreate(scd_read_data, "SCD read Task", 4096, NULL, 5, &scd_read_task_handle);
 
     scd_write_command(0x21b1); // start periodic measurement
     xTimerStart(scdReadTimer, portMAX_DELAY);
