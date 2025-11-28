@@ -1,9 +1,9 @@
 #include "net_shell.h"
-#include "esp_log.h"
 #include "esp_console.h"
 #include "option_configure.h"
 #include "esp_timer.h"
 #include "network_service.h"
+#include "esp_common.h"
 
 #define WEBSHELL_RETRY_COUNT 10
 
@@ -140,12 +140,12 @@ httpd_handle_t start_webserver(void)
     // Start the httpd server
     while(!networkReady)
     {
-        esp_rom_printf("Waiting for network ready to start webshell\r\n");
+        ESP_LOGE(TAG,"Waiting for network ready to start webshell");
         vTaskDelay(pdMS_TO_TICKS(200));
         retry_count++;
         if(retry_count==WEBSHELL_RETRY_COUNT)
         {
-            esp_rom_printf("Webshell start fail since network is not ready.\r\n");
+            ESP_LOGE(TAG,"Webshell start fail since network is not ready.");
             return NULL;
         }
     }
@@ -159,6 +159,6 @@ httpd_handle_t start_webserver(void)
         ws_cmd_result_return_buf = malloc(1024 * sizeof(char));
         return server;
     }
-    ESP_LOGI(TAG, "Error starting server!");
+    ESP_LOGE(TAG, "Error starting server!");
     return NULL;
 }

@@ -2,9 +2,9 @@
 #include <driver/gpio.h>
 #include <string.h>
 #include <option_configure.h>
-#include "esp_log.h"
 #include "esp_console.h"
 #include "linenoise/linenoise.h"
+#include "esp_common.h"
 
 // #define USB_CDC
 
@@ -17,6 +17,8 @@
 #define ESP_CONSOLE
 
 #define REPL_CHAR CONFIG_IDF_TARGET
+
+static const char* TAG="UART";
 
 static QueueHandle_t uartEventQueue;
 
@@ -120,6 +122,7 @@ void uart_init()
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
     ESP_ERROR_CHECK(esp_console_start_repl(repl));
 #endif
+    ESP_LOGI(TAG,"UART init done");
 }
 
 void uartSend(const char *str)

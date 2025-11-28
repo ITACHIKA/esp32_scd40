@@ -3,13 +3,13 @@
 #include "option_configure.h"
 #include "string.h"
 #include "esp_event.h"
-#include "esp_log.h"
+#include "esp_common.h"
 
 #define WIFI_RECONN_INTV_MS 50
 
 #define WIFI_RECONN_MAX_RETRIES 10
 
-const char *TAG = "WF Handler";
+const char *TAG = "NET";
 bool networkReady = false;
 static uint8_t retry_count=0;
 
@@ -39,7 +39,7 @@ static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int
             }
             else
             {
-                esp_rom_printf("WIFI connect retry max count reached, please check configuration!\r\n");
+                ESP_LOGE(TAG,"WIFI connect retry max count reached, please check configuration!");
             }
             break;
         }
@@ -58,11 +58,11 @@ void networkInit()
 {
     if (strcmp(wifiSSID, "") == 0)
     {
-        esp_rom_printf("Wifi config invalid. Please reset.");
+        ESP_LOGE(TAG,"Wifi config invalid. Please reset.");
     }
     else
     {
-        esp_rom_printf("wifissid:%s\n", wifiSSID);
+        ESP_LOGI(TAG,"wifissid:%s", wifiSSID);
         //esp_rom_printf("wifipass:%s\n", WifiPasswd);
         ESP_ERROR_CHECK(esp_netif_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -98,6 +98,6 @@ void networkInit()
         
         ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(44)); //https://esp32.com/viewtopic.php?f=2&t=41899#p137764, guess for YD-ESP32-S3 or similar clones only
         
-        esp_rom_printf("wifi connect: %d\r\n", esp_wifi_connect());
+        ESP_LOGI(TAG,"wifi connect: %d", esp_wifi_connect());
     }
 }

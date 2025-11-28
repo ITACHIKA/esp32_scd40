@@ -8,12 +8,15 @@
 #include <string.h>
 #include "driver/i2c.h"
 #include "esp_mac.h"
+#include "esp_common.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define SCD40_I2C_ADDR 0x62
 
 QueueHandle_t uartInputQueue;
 bool optionChange = false;
+
+static const char* TAG = "CONSOLE";
 
 static char *target;
 
@@ -351,5 +354,6 @@ void optionConfigInit()
     esp_console_register_calibr_command();
     esp_console_register_reboot_command();
     esp_console_register_mem_command();
+    ESP_LOGI(TAG,"ESP configs and command load done.");
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
 }

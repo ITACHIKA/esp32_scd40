@@ -2,10 +2,12 @@
 #include "option_configure.h"
 #include "nvs_service.h"
 #include "network_service.h"
-#include "esp_log.h"
 #include "mqtt_service.h"
 #include "driver/i2c.h"
 #include "net_shell.h"
+#include "esp_common.h"
+
+static const char* TAG = "main";
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_SDA 4
@@ -78,13 +80,13 @@ void scd_read_data(void *pvParameters)
         {
             if(scd_write_command(0x21b1)==ESP_OK)
             {
-                esp_rom_printf("SCD40 reinit OK\r\n");
+                ESP_LOGE(TAG,"SCD40 reinit OK");
                 fault_flag=false;
                 continue;
             }
             else
             {
-                esp_rom_printf("SCD40 reinit fail\r\n");
+                ESP_LOGE(TAG,"SCD40 reinit fail");
                 fail_cnt++;
             }
         }
@@ -92,7 +94,7 @@ void scd_read_data(void *pvParameters)
         {
             if (scd_write_command(0xec05) != ESP_OK)
             {
-                esp_rom_printf("Write error,skip\r\n");
+                ESP_LOGE(TAG,"Write error,skip");
                 fault_flag = true;
                 fail_cnt++;
                 continue;
@@ -100,7 +102,7 @@ void scd_read_data(void *pvParameters)
             vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
             if (i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(1000)) != ESP_OK)
             {
-                esp_rom_printf("Read error,skip\r\n");
+                ESP_LOGE(TAG,"Read error,skip");
                 fault_flag = true;
                 fail_cnt++;
                 continue;

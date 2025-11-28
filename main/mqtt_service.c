@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include "mqtt_client.h"
 #include "option_configure.h"
+#include "esp_common.h"
 
 esp_mqtt_client_handle_t mqttclient;
+
+static const char* TAG = "MQTT";
 
 #define MQTT_MAX_ERR_CNT 15
 static uint8_t mqtt_err_cnt = 0;
@@ -31,7 +34,7 @@ void mqtt_init()
     {
         while (!mqttclient)
         {
-            esp_rom_printf("Retry init mqtt client\r\n");
+            ESP_LOGE(TAG,"Retry init mqtt client");
             vTaskDelay(pdMS_TO_TICKS(200));
             mqttclient = esp_mqtt_client_init(&config);
             mqtt_err_cnt++;
@@ -40,7 +43,7 @@ void mqtt_init()
                 break;
             }
         }
-        esp_rom_printf("mqtt client init fail.");
+        ESP_LOGE(TAG,"mqtt client init fail.");
         return;
     }
     esp_mqtt_client_start(mqttclient);
@@ -55,7 +58,7 @@ void mqtt_publish(const char *topic, const char *msg)
     }
     if (mqtt_err_cnt == MQTT_MAX_ERR_CNT)
     {
-        esp_rom_printf("MQTT error limit exceded. Reboot.");
+        ESP_LOGE(TAG,"MQTT error limit exceded. Reboot.");
         esp_restart();
     }
 }
