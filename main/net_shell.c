@@ -1,7 +1,6 @@
 #include "net_shell.h"
 #include "esp_console.h"
 #include "option_configure.h"
-#include "esp_timer.h"
 #include "network_service.h"
 #include "esp_common.h"
 

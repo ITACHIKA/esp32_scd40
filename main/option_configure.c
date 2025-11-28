@@ -335,6 +335,25 @@ esp_err_t esp_console_register_mem_command(void)
     return esp_console_cmd_register(&command);
 }
 
+int uptime_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    int64_t uptime = esp_timer_get_time();
+    esp_rom_printf("Uptime:%lld millis\r\n",uptime);
+    return 0;
+}
+
+esp_err_t esp_console_register_uptime_command(void)
+{
+    esp_console_cmd_t command = {
+        .command = "uptime",
+        .help = "Get system uptime.",
+        .func = &uptime_command,
+        .argtable = NULL};
+    return esp_console_cmd_register(&command);
+}
+
 void optionConfigInit()
 {
     //uartInputQueue = xQueueCreate(10, sizeof(char *));
@@ -354,6 +373,8 @@ void optionConfigInit()
     esp_console_register_calibr_command();
     esp_console_register_reboot_command();
     esp_console_register_mem_command();
+    esp_console_register_uptime_command();
+    
     ESP_LOGI(TAG,"ESP configs and command load done.");
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
 }
