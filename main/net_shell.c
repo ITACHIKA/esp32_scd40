@@ -140,7 +140,7 @@ httpd_handle_t start_webserver(void)
     while(!networkReady)
     {
         ESP_LOGE(TAG,"Waiting for network ready to start webshell");
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(500));
         retry_count++;
         if(retry_count==WEBSHELL_RETRY_COUNT)
         {

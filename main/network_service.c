@@ -35,6 +35,7 @@ static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int
             retry_count++;
             if(retry_count<WIFI_RECONN_MAX_RETRIES)
             {
+                vTaskDelay(pdMS_TO_TICKS(WIFI_RECONN_INTV_MS));
                 esp_wifi_connect();
             }
             else

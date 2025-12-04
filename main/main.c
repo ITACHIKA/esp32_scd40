@@ -70,6 +70,7 @@ void scd_read_data(void *pvParameters)
 {
     for (;;)
     {
+        //ESP_LOGI(TAG,"scd read");
         uint8_t readBuffer[9] = {0};
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(fail_cnt==MAX_RETRIES_BEFORE_REBOOT)
@@ -78,33 +79,33 @@ void scd_read_data(void *pvParameters)
         }
         if(fault_flag)
         {
-            if(scd_write_command(0x21b1)==ESP_OK)
-            {
-                ESP_LOGE(TAG,"SCD40 reinit OK");
-                fault_flag=false;
-                continue;
-            }
-            else
-            {
-                ESP_LOGE(TAG,"SCD40 reinit fail");
-                fail_cnt++;
-            }
+            fail_cnt++;
+            ESP_LOGE(TAG,"SCD40 fail, now reinit");
+            ESP_LOGE(TAG,"%d",scd_write_command(0x3f86)); //stop periodic
+            vTaskDelay(pdMS_TO_TICKS(500));
+            ESP_LOGE(TAG,"%d",scd_write_command(0x3646)); //reinit
+            vTaskDelay(pdMS_TO_TICKS(30));
+            ESP_LOGE(TAG,"%d",scd_write_command(0x21b1));
+            xTimerReset(scdReadTimer,portMAX_DELAY);
+            fault_flag=false;
+            continue;
         }
         if (!fault_flag)
         {
-            if (scd_write_command(0xec05) != ESP_OK)
+            esp_err_t ret;
+            ret = scd_write_command(0xec05);
+            if (ret!= ESP_OK)
             {
-                ESP_LOGE(TAG,"Write error,skip");
+                ESP_LOGE(TAG,"Write error: %d,skip",ret);
                 fault_flag = true;
-                fail_cnt++;
                 continue;
             }
             vTaskDelay(pdMS_TO_TICKS(1)); // according to ds
-            if (i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(1000)) != ESP_OK)
+            ret = i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(500));
+            if (ret != ESP_OK)
             {
-                ESP_LOGE(TAG,"Read error,skip");
+                ESP_LOGE(TAG,"Read error: %d,skip",ret);
                 fault_flag = true;
-                fail_cnt++;
                 continue;
             }
             bool co2_crc_res = (sensirion_common_generate_crc(readBuffer, 2) == readBuffer[2]);
