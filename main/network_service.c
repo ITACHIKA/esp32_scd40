@@ -28,7 +28,7 @@ static void wifiEventHandler(void *handlerargs, esp_event_base_t event_base, int
             networkReady = true;
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
-        {  
+        {
             wifi_event_sta_disconnected_t *disconn = (wifi_event_sta_disconnected_t *)event_data;
             ESP_LOGW(TAG, "Disconnected from SSID:%s, reason:%d", disconn->ssid, disconn->reason);
             networkReady = false;

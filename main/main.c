@@ -27,6 +27,7 @@ TimerHandle_t scdReadTimer;
 TaskHandle_t scd_read_task_handle;
 
 bool fault_flag = false;
+bool need_reset = true;
 static uint8_t fail_cnt=0;
 
 static char* mqtt_co2_topic;
@@ -75,17 +76,19 @@ void scd_read_data(void *pvParameters)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(fail_cnt==MAX_RETRIES_BEFORE_REBOOT)
         {
-            esp_restart();
+            //esp_restart();
+            ESP_LOGE(TAG,"SCD40 repetedly fail, please manually reset system power.");
+            need_reset=true;
         }
         if(fault_flag)
         {
             fail_cnt++;
-            ESP_LOGE(TAG,"SCD40 fail, now reinit");
-            ESP_LOGE(TAG,"%d",scd_write_command(0x3f86)); //stop periodic
+            ESP_LOGE(TAG,"SCD40 error, now reinit");
+            scd_write_command(0x3f86); //stop periodic
             vTaskDelay(pdMS_TO_TICKS(500));
-            ESP_LOGE(TAG,"%d",scd_write_command(0x3646)); //reinit
+            scd_write_command(0x3646); //reinit
             vTaskDelay(pdMS_TO_TICKS(30));
-            ESP_LOGE(TAG,"%d",scd_write_command(0x21b1));
+            scd_write_command(0x21b1);
             xTimerReset(scdReadTimer,portMAX_DELAY);
             fault_flag=false;
             continue;
@@ -96,7 +99,7 @@ void scd_read_data(void *pvParameters)
             ret = scd_write_command(0xec05);
             if (ret!= ESP_OK)
             {
-                ESP_LOGE(TAG,"Write error: %d,skip",ret);
+                ESP_LOGE(TAG,"Write error: %d",ret);
                 fault_flag = true;
                 continue;
             }
@@ -104,7 +107,7 @@ void scd_read_data(void *pvParameters)
             ret = i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(500));
             if (ret != ESP_OK)
             {
-                ESP_LOGE(TAG,"Read error: %d,skip",ret);
+                ESP_LOGE(TAG,"Read error: %d",ret);
                 fault_flag = true;
                 continue;
             }
@@ -138,20 +141,22 @@ void scd_read_data(void *pvParameters)
 
 void app_main(void)
 {
+    //init all components here
     ESP_ERROR_CHECK(nvs_utils_init());
     optionConfigInit();
     uart_init();
     networkInit();
-    esp_log_level_set("wifi", ESP_LOG_WARN);
+    //esp_log_level_set("wifi", ESP_LOG_WARN);
     mqtt_init();
     start_webserver();
+
+    // put user code here
     mqtt_co2_topic=calloc(1,128);
     mqtt_rh_topic=calloc(1,128);
     mqtt_atemp_topic=calloc(1,128);
     snprintf(mqtt_co2_topic,128,"sensor/%s/co2",devName);
     snprintf(mqtt_rh_topic,128,"sensor/%s/rh",devName);
     snprintf(mqtt_atemp_topic,128,"sensor/%s/atemp",devName);
-    // put user code here
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA,
