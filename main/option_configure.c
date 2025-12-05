@@ -1,11 +1,8 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
 #include "option_configure.h"
 #include "uart_service.h"
 #include "nvs_service.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
-#include <string.h>
 #include "driver/i2c.h"
 #include "esp_mac.h"
 #include "esp_common.h"

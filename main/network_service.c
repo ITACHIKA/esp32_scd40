@@ -1,7 +1,6 @@
 #include "esp_wifi.h"
 #include "nvs_service.h"
 #include "option_configure.h"
-#include "string.h"
 #include "esp_event.h"
 #include "esp_common.h"
 

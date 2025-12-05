@@ -146,7 +146,6 @@ void app_main(void)
     optionConfigInit();
     uart_init();
     networkInit();
-    //esp_log_level_set("wifi", ESP_LOG_WARN);
     mqtt_init();
     start_webserver();
 

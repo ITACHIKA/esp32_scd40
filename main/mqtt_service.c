@@ -35,7 +35,7 @@ void mqtt_init()
         while (!mqttclient)
         {
             ESP_LOGE(TAG,"Retry init mqtt client");
-            vTaskDelay(pdMS_TO_TICKS(200));
+            vTaskDelay(pdMS_TO_TICKS(500));
             mqttclient = esp_mqtt_client_init(&config);
             mqtt_err_cnt++;
             if (mqtt_err_cnt == MQTT_MAX_ERR_CNT)

@@ -1,6 +1,5 @@
 #include <driver/uart.h>
 #include <driver/gpio.h>
-#include <string.h>
 #include <option_configure.h>
 #include "esp_console.h"
 #include "linenoise/linenoise.h"
@@ -22,7 +21,7 @@ static const char* TAG="UART";
 
 static QueueHandle_t uartEventQueue;
 
-void uartEventQueueHandler(void *pvParameters)
+/* void uartEventQueueHandler(void *pvParameters)
 {
     char *stringBuffer = malloc(64);
     size_t buffLen = 0;
@@ -73,7 +72,8 @@ void uartEventQueueHandler(void *pvParameters)
         }
     }
     free(stringBuffer);
-}
+}*/
+//this function is currently not used since UART input is managed by ESP Console
 
 void uart_init()
 {

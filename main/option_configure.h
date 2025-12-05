@@ -1,5 +1,4 @@
-#pragma once
-#include "freertos/FreeRTOS.h"
+#include "esp_common.h"
 #include "freertos/queue.h"
 
 extern QueueHandle_t uartInputQueue;
@@ -16,6 +15,5 @@ extern char *devName;
 extern char *devmac;
 
 extern bool optionChange;
-
 
 void optionConfigInit();
