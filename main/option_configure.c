@@ -358,8 +358,8 @@ int batt_command(int argc, char **argv)
     (void)argv;
     float batt_v = get_batt_level();
     batt_status batt_code = get_batt_status();
-    esp_rom_printf("Current battery voltage:%d\r\n",(int)batt_v);
-    esp_rom_printf("Current battery status:%s\r\n",batt_stat_str[batt_code]);
+    esp_rom_printf("Current battery voltage: %d\r\n",(int)batt_v);
+    esp_rom_printf("Current battery status: %s\r\n",batt_stat_str[batt_code]);
     return 0;
 }
 

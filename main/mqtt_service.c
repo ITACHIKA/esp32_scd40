@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include "mqtt_client.h"
 #include "option_configure.h"
+#include "network_service.h"
 #include "esp_common.h"
 
 esp_mqtt_client_handle_t mqttclient;
 
-static const char* TAG = "MQTT";
+static const char *TAG = "MQTT";
 
 #define MQTT_MAX_ERR_CNT 15
 static uint8_t mqtt_err_cnt = 0;
@@ -34,7 +35,7 @@ void mqtt_init()
     {
         while (!mqttclient)
         {
-            ESP_LOGE(TAG,"Retry init mqtt client");
+            ESP_LOGE(TAG, "Retry init mqtt client");
             vTaskDelay(pdMS_TO_TICKS(500));
             mqttclient = esp_mqtt_client_init(&config);
             mqtt_err_cnt++;
@@ -43,7 +44,7 @@ void mqtt_init()
                 break;
             }
         }
-        ESP_LOGE(TAG,"mqtt client init fail.");
+        ESP_LOGE(TAG, "mqtt client init fail.");
         return;
     }
     esp_mqtt_client_start(mqttclient);
@@ -51,14 +52,17 @@ void mqtt_init()
 
 void mqtt_publish(const char *topic, const char *msg)
 {
-    int ret_code = esp_mqtt_client_publish(mqttclient, topic, msg, 0, 1, 0);
-    if (ret_code == -1 || ret_code == -2)
+    if (networkReady)
     {
-        mqtt_err_cnt++;
-    }
-    if (mqtt_err_cnt == MQTT_MAX_ERR_CNT)
-    {
-        ESP_LOGE(TAG,"MQTT error limit exceded. Reboot.");
-        esp_restart();
+        int ret_code = esp_mqtt_client_publish(mqttclient, topic, msg, 0, 1, 0);
+        if (ret_code == -1 || ret_code == -2)
+        {
+            mqtt_err_cnt++;
+        }
+        if (mqtt_err_cnt == MQTT_MAX_ERR_CNT)
+        {
+            ESP_LOGE(TAG, "MQTT error limit exceded. Reboot.");
+            esp_restart();
+        }
     }
 }
