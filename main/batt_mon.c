@@ -8,6 +8,17 @@ batt_cfg battery_module_cfg;
 adc_oneshot_unit_handle_t adc_oneshot_handle;
 adc_cali_handle_t adc_cali_handle;
 
+const char* batt_stat_str[]={
+    "No Power",
+    "Charger idle",
+    "INVALID",
+    "Charge done",
+    "INVALID",
+    "Charging",
+    "INVALID",
+    "LDO Mode"
+};
+
 void batt_mon_init(batt_cfg batt_module_pins)
 {
     battery_module_cfg=batt_module_pins;
@@ -55,6 +66,7 @@ void batt_mon_init(batt_cfg batt_module_pins)
         .intr_type = GPIO_INTR_DISABLE
     };
     gpio_config(&gpio_conf);
+    ESP_LOGI(TAG,"BATT module init done.");
 }
 
 /*

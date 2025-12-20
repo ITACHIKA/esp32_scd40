@@ -5,9 +5,10 @@
 #include "mqtt_service.h"
 #include "driver/i2c.h"
 #include "net_shell.h"
+#include "batt_mon.h"
 #include "esp_common.h"
 
-static const char* TAG = "main";
+static const char *TAG = "main";
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_SDA 4
@@ -28,11 +29,11 @@ TaskHandle_t scd_read_task_handle;
 
 bool fault_flag = false;
 bool need_reset = true;
-static uint8_t fail_cnt=0;
+static uint8_t fail_cnt = 0;
 
-static char* mqtt_co2_topic;
-static char* mqtt_atemp_topic;
-static char* mqtt_rh_topic;
+static char *mqtt_co2_topic;
+static char *mqtt_atemp_topic;
+static char *mqtt_rh_topic;
 
 uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
 {
@@ -71,35 +72,35 @@ void scd_read_data(void *pvParameters)
 {
     for (;;)
     {
-        //ESP_LOGI(TAG,"scd read");
+        // ESP_LOGI(TAG,"scd read");
         uint8_t readBuffer[9] = {0};
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if(fail_cnt==MAX_RETRIES_BEFORE_REBOOT)
+        if (fail_cnt == MAX_RETRIES_BEFORE_REBOOT)
         {
-            //esp_restart();
-            ESP_LOGE(TAG,"SCD40 repetedly fail, please manually reset system power.");
-            need_reset=true;
+            // esp_restart();
+            ESP_LOGE(TAG, "SCD40 repetedly fail, please manually reset system power.");
+            need_reset = true;
         }
-        if(fault_flag)
+        if (fault_flag)
         {
             fail_cnt++;
-            ESP_LOGE(TAG,"SCD40 error, now reinit");
-            scd_write_command(0x3f86); //stop periodic
+            ESP_LOGE(TAG, "SCD40 error, now reinit");
+            scd_write_command(0x3f86); // stop periodic
             vTaskDelay(pdMS_TO_TICKS(500));
-            scd_write_command(0x3646); //reinit
+            scd_write_command(0x3646); // reinit
             vTaskDelay(pdMS_TO_TICKS(30));
             scd_write_command(0x21b1);
-            xTimerReset(scdReadTimer,portMAX_DELAY);
-            fault_flag=false;
+            xTimerReset(scdReadTimer, portMAX_DELAY);
+            fault_flag = false;
             continue;
         }
         if (!fault_flag)
         {
             esp_err_t ret;
             ret = scd_write_command(0xec05);
-            if (ret!= ESP_OK)
+            if (ret != ESP_OK)
             {
-                ESP_LOGE(TAG,"Write error: %d",ret);
+                ESP_LOGE(TAG, "Write error: %d", ret);
                 fault_flag = true;
                 continue;
             }
@@ -107,7 +108,7 @@ void scd_read_data(void *pvParameters)
             ret = i2c_master_read_from_device(I2C_MASTER_NUM, SCD40_I2C_ADDR, readBuffer, 9, pdMS_TO_TICKS(500));
             if (ret != ESP_OK)
             {
-                ESP_LOGE(TAG,"Read error: %d",ret);
+                ESP_LOGE(TAG, "Read error: %d", ret);
                 fault_flag = true;
                 continue;
             }
@@ -141,28 +142,36 @@ void scd_read_data(void *pvParameters)
 
 void app_main(void)
 {
-    //init all components here
+    // init all components here
     ESP_ERROR_CHECK(nvs_utils_init());
     optionConfigInit();
     uart_init();
+    batt_cfg cfg = {
+        .adc_channel = ADC_CHANNEL_7,
+        .adc_unit = ADC_UNIT_1,
+        .pg_pin = 42,
+        .s2_pin = 41,
+        .s1_pin = 40
+    };
+    batt_mon_init(cfg);
     networkInit();
     mqtt_init();
     start_webserver();
-
     // put user code here
-    mqtt_co2_topic=calloc(1,128);
-    mqtt_rh_topic=calloc(1,128);
-    mqtt_atemp_topic=calloc(1,128);
-    snprintf(mqtt_co2_topic,128,"sensor/%s/co2",devName);
-    snprintf(mqtt_rh_topic,128,"sensor/%s/rh",devName);
-    snprintf(mqtt_atemp_topic,128,"sensor/%s/atemp",devName);
+    mqtt_co2_topic = calloc(1, 128);
+    mqtt_rh_topic = calloc(1, 128);
+    mqtt_atemp_topic = calloc(1, 128);
+    snprintf(mqtt_co2_topic, 128, "sensor/%s/co2", devName);
+    snprintf(mqtt_rh_topic, 128, "sensor/%s/rh", devName);
+    snprintf(mqtt_atemp_topic, 128, "sensor/%s/atemp", devName);
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_io_num = I2C_MASTER_SCL,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = I2C_MASTER_FREQ_HZ};
+        .master.clk_speed = I2C_MASTER_FREQ_HZ
+    };
     ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
     ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0));
 

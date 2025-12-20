@@ -5,6 +5,7 @@
 #include "argtable3/argtable3.h"
 #include "driver/i2c.h"
 #include "esp_mac.h"
+#include "batt_mon.h"
 #include "esp_common.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
@@ -351,6 +352,27 @@ esp_err_t esp_console_register_uptime_command(void)
     return esp_console_cmd_register(&command);
 }
 
+int batt_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    float batt_v = get_batt_level();
+    batt_status batt_code = get_batt_status();
+    esp_rom_printf("Current battery voltage:%d\r\n",(int)batt_v);
+    esp_rom_printf("Current battery status:%s\r\n",batt_stat_str[batt_code]);
+    return 0;
+}
+
+esp_err_t esp_console_register_batt_command(void)
+{
+    esp_console_cmd_t command = {
+        .command = "batt",
+        .help = "Get battery status.",
+        .func = &batt_command,
+        .argtable = NULL};
+    return esp_console_cmd_register(&command);
+}
+
 void optionConfigInit()
 {
     //uartInputQueue = xQueueCreate(10, sizeof(char *));
@@ -371,6 +393,7 @@ void optionConfigInit()
     esp_console_register_reboot_command();
     esp_console_register_mem_command();
     esp_console_register_uptime_command();
+    esp_console_register_batt_command();
     
     ESP_LOGI(TAG,"ESP configs and command load done.");
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);

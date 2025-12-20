@@ -23,6 +23,8 @@ typedef enum{
     BATT_LDO
 } batt_status;
 
+extern const char* batt_stat_str[];
+
 void batt_mon_init(batt_cfg batt_module_pins);
 float get_batt_level();
 batt_status get_batt_status();
