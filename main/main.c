@@ -81,10 +81,10 @@ void scd_read_data(void *pvParameters)
         {
             // esp_restart();
             ESP_LOGE(TAG, "SCD40 repetedly fail, please manually reset system power.");
-            xTimerStop(scdReadTimer,portMAX_DELAY);
+            //xTimerStop(scdReadTimer,portMAX_DELAY);
             need_reset = true;
         }
-        if (fault_flag)
+        if (fault_flag && !need_reset)
         {
             fail_cnt++;
             ESP_LOGE(TAG, "SCD40 error, now reinit");
