@@ -73,6 +73,7 @@ void scd_read_data(void *pvParameters)
 {
     for (;;)
     {
+        char result[32];
         // ESP_LOGI(TAG,"scd read");
         uint8_t readBuffer[9] = {0};
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -80,6 +81,7 @@ void scd_read_data(void *pvParameters)
         {
             // esp_restart();
             ESP_LOGE(TAG, "SCD40 repetedly fail, please manually reset system power.");
+            xTimerStop(scdReadTimer,portMAX_DELAY);
             need_reset = true;
         }
         if (fault_flag)
@@ -121,8 +123,6 @@ void scd_read_data(void *pvParameters)
             uint16_t rel_humi_raw = ((uint16_t)readBuffer[6] << 8 | readBuffer[7]);
             float amb_temp = -45.0f + 175.0f * ((float)amb_temp_raw / 65535.0f);
             float rel_humi = 100.0f * ((float)rel_humi_raw / 65535.0f);
-            uint8_t batt_level=get_battery_level();
-            char result[32];
             if (co2_crc_res)
             {
                 snprintf(result, sizeof(result), "{\"co2\":%u}", co2_ppm);
@@ -138,9 +138,10 @@ void scd_read_data(void *pvParameters)
                 snprintf(result, sizeof(result), "{\"rh\":%.2f}", rel_humi);
                 mqtt_publish(mqtt_rh_topic, result);
             }
-            snprintf(result, sizeof(result), "{\"battlevel\":%d}", batt_level);
-            mqtt_publish(mqtt_battlvl_topic, result);
         }
+        uint8_t batt_level=get_battery_level();
+        snprintf(result, sizeof(result), "{\"battlevel\":%d}", batt_level);
+        mqtt_publish(mqtt_battlvl_topic, result);
     }
 }
 
