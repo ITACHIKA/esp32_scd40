@@ -7,6 +7,23 @@ static const char *TAG = "BATT";
 batt_cfg battery_module_cfg;
 adc_oneshot_unit_handle_t adc_oneshot_handle;
 adc_cali_handle_t adc_cali_handle;
+const uint8_t BATTERY_TABLE_SIZE=21;
+
+static const uint16_t battery_voltage_mv[] = {
+    4200, 4150, 4110, 4080, 4020,
+    3980, 3950, 3910, 3870, 3850,
+    3840, 3820, 3800, 3790, 3770,
+    3750, 3730, 3710, 3690, 3610,
+    3300
+};
+
+static const uint8_t battery_percent[] = {
+    100, 95, 90, 85, 80,
+    75, 70, 65, 60, 55,
+    50, 45, 40, 35, 30,
+    25, 20, 15, 10, 5,
+    0
+};
 
 const char* batt_stat_str[]={
     "No Power",
@@ -18,6 +35,21 @@ const char* batt_stat_str[]={
     "INVALID",
     "LDO Mode"
 };
+
+static uint8_t battery_level_linear_interpo(uint16_t mv)
+{
+    for (int i = 0; i < BATTERY_TABLE_SIZE - 1; i++) {
+        if (mv >= battery_voltage_mv[i + 1]) {
+            uint16_t v1 = battery_voltage_mv[i];
+            uint16_t v2 = battery_voltage_mv[i + 1];
+            uint8_t  p1 = battery_percent[i];
+            uint8_t  p2 = battery_percent[i + 1];
+
+            return p2 + (mv - v2) * (p1 - p2) / (v1 - v2);
+        }
+    }
+    return 0;
+}
 
 void batt_mon_init(batt_cfg batt_module_pins)
 {
@@ -72,7 +104,7 @@ void batt_mon_init(batt_cfg batt_module_pins)
 /*
     Return reading value in mV
 */
-float get_batt_level()
+float get_batt_voltage()
 {
     int adc_raw_value;
     int adc_raw_voltage;
@@ -81,6 +113,16 @@ float get_batt_level()
     adc_cali_raw_to_voltage(adc_cali_handle,adc_raw_value,&adc_raw_voltage);
     adc_voltage=(float)adc_raw_voltage*(10.+24.)/24.; // resistor voltage divider
     return adc_voltage;
+}
+
+/*
+    Return battery level based on raw voltage, using linear interpolation
+*/
+uint8_t get_battery_level()
+{
+    uint16_t raw_voltage=get_batt_voltage();
+    uint8_t batt_level=battery_level_linear_interpo(raw_voltage);
+    return batt_level;
 }
 
 /*

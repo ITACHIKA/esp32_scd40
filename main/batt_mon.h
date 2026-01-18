@@ -26,5 +26,6 @@ typedef enum{
 extern const char* batt_stat_str[];
 
 void batt_mon_init(batt_cfg batt_module_pins);
-float get_batt_level();
+float get_batt_voltage();
+uint8_t get_battery_level();
 batt_status get_batt_status();

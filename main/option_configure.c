@@ -356,7 +356,7 @@ int batt_command(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
-    float batt_v = get_batt_level();
+    float batt_v = get_batt_voltage();
     batt_status batt_code = get_batt_status();
     esp_rom_printf("Current battery voltage: %d\r\n",(int)batt_v);
     esp_rom_printf("Current battery status: %s\r\n",batt_stat_str[batt_code]);
@@ -366,9 +366,28 @@ int batt_command(int argc, char **argv)
 esp_err_t esp_console_register_batt_command(void)
 {
     esp_console_cmd_t command = {
-        .command = "batt",
-        .help = "Get battery status.",
+        .command = "batt_raw",
+        .help = "Get raw battery voltage (mV).",
         .func = &batt_command,
+        .argtable = NULL};
+    return esp_console_cmd_register(&command);
+}
+
+int batt_level_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    uint8_t batt_lvl = get_battery_level();
+    esp_rom_printf("Current battery level: %d\r\n",batt_lvl);
+    return 0;
+}
+
+esp_err_t esp_console_register_batt_level_command(void)
+{
+    esp_console_cmd_t command = {
+        .command = "batt_level",
+        .help = "Get battery level(%%).",
+        .func = &batt_level_command,
         .argtable = NULL};
     return esp_console_cmd_register(&command);
 }
@@ -394,6 +413,7 @@ void optionConfigInit()
     esp_console_register_mem_command();
     esp_console_register_uptime_command();
     esp_console_register_batt_command();
+    esp_console_register_batt_level_command();
     
     ESP_LOGI(TAG,"ESP configs and command load done.");
     // xTaskCreate(inputOptionHandler, "inputOptionHandler", 2048, NULL, 4, NULL);
