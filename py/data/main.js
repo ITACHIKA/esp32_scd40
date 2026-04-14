@@ -32,7 +32,7 @@ document.getElementById("scan").onclick = async function () {
     document.getElementById("scan").disabled = true;
     for (let i = 1; i < 256; i++) {
         const timecontrol = new AbortController();
-        const timeout = setTimeout(() => timecontrol.abort("Overtime"), 100);
+        const timeout = setTimeout(() => timecontrol.abort("Overtime"), 500);
         try {
             ip_str = "192.168.1." + i;
             const res = await fetch("http://" + ip_str + "/esp_discover", { signal: timecontrol.signal });

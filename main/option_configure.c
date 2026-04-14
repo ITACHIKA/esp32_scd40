@@ -338,7 +338,7 @@ int uptime_command(int argc, char **argv)
     (void)argc;
     (void)argv;
     int64_t uptime = esp_timer_get_time();
-    esp_rom_printf("Uptime:%lld millis\r\n",uptime);
+    esp_rom_printf("Uptime:%lld micro seconds\r\n",uptime);
     return 0;
 }
 

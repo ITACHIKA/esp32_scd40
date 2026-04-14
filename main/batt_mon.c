@@ -118,9 +118,8 @@ float get_batt_voltage()
 /*
     Return battery level based on raw voltage, using linear interpolation
 */
-uint8_t get_battery_level()
+uint8_t get_battery_level(uint16_t raw_voltage)
 {
-    uint16_t raw_voltage=get_batt_voltage();
     uint8_t batt_level=battery_level_linear_interpo(raw_voltage);
     return batt_level;
 }

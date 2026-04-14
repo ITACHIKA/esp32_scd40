@@ -35,6 +35,7 @@ static char *mqtt_co2_topic;
 static char *mqtt_atemp_topic;
 static char *mqtt_rh_topic;
 static char *mqtt_battlvl_topic;
+static char *mqtt_battraw_topic;
 
 uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count)
 {
@@ -139,8 +140,11 @@ void scd_read_data(void *pvParameters)
                 mqtt_publish(mqtt_rh_topic, result);
             }
         }
-        uint8_t batt_level=get_battery_level();
+        uint16_t batt_raw=get_batt_voltage();
+        uint8_t batt_level=get_battery_level(batt_raw);
         snprintf(result, sizeof(result), "{\"battlevel\":%d}", batt_level);
+        mqtt_publish(mqtt_battlvl_topic, result);
+        snprintf(result, sizeof(result), "{\"battraw\":%d}", batt_raw);
         mqtt_publish(mqtt_battlvl_topic, result);
     }
 }
@@ -167,10 +171,12 @@ void app_main(void)
     mqtt_rh_topic = calloc(1, 128);
     mqtt_atemp_topic = calloc(1, 128);
     mqtt_battlvl_topic = calloc(1, 128);
+    mqtt_battraw_topic = calloc(1, 128);
     snprintf(mqtt_co2_topic, 128, "sensor/%s/co2", devName);
     snprintf(mqtt_rh_topic, 128, "sensor/%s/rh", devName);
     snprintf(mqtt_atemp_topic, 128, "sensor/%s/atemp", devName);
     snprintf(mqtt_battlvl_topic,128,"sensor/%s/battlvl",devName);
+    snprintf(mqtt_battraw_topic,128,"sensor/%s/battraw",devName);
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA,
